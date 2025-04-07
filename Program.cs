@@ -47,5 +47,15 @@ app.MapPost("/devices/{id}/off", (string id, DeviceManager manager) =>
     manager.TurnOffDevice(id);
     return Results.Ok();
 });
+app.MapPost("/devices", async (DeviceManager manager, HttpContext context) =>
+{
+    var device = await context.Request.ReadFromJsonAsync<Device>();
+    if (device == null)
+        return Results.BadRequest("Invalid device data.");
+
+    manager.AddDevice(device);
+    return Results.Created($"/devices/{device.Id}", device);
+});
+
 
 app.Run();
