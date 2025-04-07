@@ -1,75 +1,51 @@
 using DeviceLibrary;
 using DeviceLibrary.Models;
-
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Device API", Version = "v1" });
+});
+
+builder.Services.AddSingleton<IDeviceParser, DeviceParser>();
+builder.Services.AddSingleton<IDeviceLoader, DataLoader>();
+builder.Services.AddSingleton<DeviceManager>(sp =>
+{
+    var parser = sp.GetRequiredService<IDeviceParser>();
+    var loader = new DataLoader(parser);
+    return new DeviceManager(loader, "input.txt");
+});
+
 var app = builder.Build();
 
-// Set up dependencies
-IDeviceParser parser = new DeviceParser();
-IDeviceLoader loader = new DataLoader(parser);
-DeviceManager manager = new DeviceManager(loader, "input.txt");
+app.UseSwagger();
+app.UseSwaggerUI();
 
-// Get all devices
-app.MapGet("/devices", () =>
+app.MapGet("/devices", (DeviceManager manager) =>
 {
-    return Results.Ok(manager.GetAll());
+    var devices = manager.GetAllDevices();
+    return Results.Ok(devices);
 });
 
-// Get device by ID
-app.MapGet("/devices/{id}", (string id) =>
+app.MapGet("/devices/{id}", (string id, DeviceManager manager) =>
 {
-    var device = manager.GetById(id);
-    return device is null ? Results.NotFound() : Results.Ok(device);
+    var device = manager.GetDeviceById(id);
+    return device != null ? Results.Ok(device) : Results.NotFound();
 });
 
-// Add a new device
-app.MapPost("/devices", (Device device) =>
+app.MapPost("/devices/{id}/on", (string id, DeviceManager manager) =>
 {
-    try
-    {
-        manager.Add(device);
-        return Results.Created($"/devices/{device.Id}", device);
-    }
-    catch (Exception ex)
-    {
-        return Results.BadRequest(ex.Message);
-    }
-});
-
-// Update device
-app.MapPut("/devices/{id}", (string id, Device updated) =>
-{
-    if (!manager.Update(id, updated))
-        return Results.NotFound();
+    manager.TurnOnDevice(id);
     return Results.Ok();
 });
 
-// Delete device
-app.MapDelete("/devices/{id}", (string id) =>
+app.MapPost("/devices/{id}/off", (string id, DeviceManager manager) =>
 {
-    if (!manager.DeleteById(id))
-        return Results.NotFound();
+    manager.TurnOffDevice(id);
     return Results.Ok();
-});
-
-// Turn ON a device
-app.MapPost("/devices/{id}/turnon", (string id) =>
-{
-    return manager.TurnOnDevice(id) ? Results.Ok() : Results.BadRequest("Could not turn on device.");
-});
-
-// Turn OFF a device
-app.MapPost("/devices/{id}/turnoff", (string id) =>
-{
-    return manager.TurnOffDevice(id) ? Results.Ok() : Results.BadRequest("Could not turn off device.");
-});
-
-// Save all devices to a file
-app.MapPost("/devices/save", () =>
-{
-    manager.SaveDevicesToFile("output.txt");
-    return Results.Ok("Devices saved to output.txt");
 });
 
 app.Run();

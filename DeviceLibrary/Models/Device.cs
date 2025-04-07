@@ -6,7 +6,9 @@ public abstract class Device
     public string Name { get; set; }
     public bool IsOn { get; protected set; }
 
-    protected Device(string id, string name)
+    protected Device() { }
+
+    public Device(string id, string name)
     {
         Id = id;
         Name = name;

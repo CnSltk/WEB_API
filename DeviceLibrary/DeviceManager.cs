@@ -4,85 +4,55 @@ namespace DeviceLibrary;
 
 public class DeviceManager
 {
-    private const int MaxCapacity = 15;
     private readonly List<Device> _devices;
 
     public DeviceManager(IDeviceLoader loader, string filePath)
     {
-        _devices = loader.LoadDevicesFromFile(filePath);
+        _devices = loader.LoadDevicesFromFile(filePath).ToList();
     }
 
-    public List<Device> GetAll() => _devices;
-
-    public void DisplayAllDevices()
+    public IEnumerable<Device> GetAllDevices()
     {
-        foreach (var device in _devices)
-        {
-            Console.WriteLine(device);
-        }
+        return _devices;
     }
 
-    public Device? GetById(string id)
+    public Device? GetDeviceById(string id)
     {
-        return _devices.Find(d => d.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+        return _devices.FirstOrDefault(d => d.Id == id);
     }
 
-    public bool DeleteById(string id)
+    public void AddDevice(Device device)
     {
-        var device = GetById(id);
-        if (device == null) return false;
-
-        _devices.Remove(device);
-        return true;
-    }
-
-    public bool Add(Device device)
-    {
-        if (_devices.Count >= MaxCapacity)
-            throw new InvalidOperationException("Device capacity reached (15 devices max).");
-
+        if (_devices.Any(d => d.Id == device.Id)) return;
         _devices.Add(device);
-        return true;
     }
 
-    public bool Update(string id, Device newDevice)
+    public bool UpdateDevice(string id, string newName)
     {
-        var index = _devices.FindIndex(d => d.Id == id);
-        if (index == -1) return false;
-
-        _devices[index] = newDevice;
-        return true;
-    }
-
-    public bool TurnOnDevice(string id)
-    {
-        var device = GetById(id);
+        var device = GetDeviceById(id);
         if (device == null) return false;
 
-        try
-        {
-            device.TurnOn();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[ERROR] {ex.Message}");
-            return false;
-        }
-    }
-
-    public bool TurnOffDevice(string id)
-    {
-        var device = GetById(id);
-        if (device == null) return false;
-
-        device.TurnOff();
+        device.Name = newName;
         return true;
     }
 
-    public void SaveDevicesToFile(string path)
+    public bool DeleteDevice(string id)
     {
-        var lines = _devices.Select(d => d.ToString()); // Or ToFileFormat if you create one
-        File.WriteAllLines(path, lines);
+        var device = GetDeviceById(id);
+        if (device == null) return false;
+
+        return _devices.Remove(device);
+    }
+
+    public void TurnOnDevice(string id)
+    {
+        var device = GetDeviceById(id);
+        device?.TurnOn();
+    }
+
+    public void TurnOffDevice(string id)
+    {
+        var device = GetDeviceById(id);
+        device?.TurnOff();
     }
 }
