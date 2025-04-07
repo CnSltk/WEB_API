@@ -56,6 +56,17 @@ app.MapPost("/devices", async (DeviceManager manager, HttpContext context) =>
     manager.AddDevice(device);
     return Results.Created($"/devices/{device.Id}", device);
 });
+app.MapPut("/devices/{id}", (string id, Device updatedDevice, DeviceManager manager) =>
+{
+    var success = manager.UpdateDevice(id, updatedDevice.Name);
+    return success ? Results.Ok(updatedDevice) : Results.NotFound();
+});
+app.MapDelete("/devices/{id}", (string id, DeviceManager manager) =>
+{
+    var success = manager.DeleteDevice(id);
+    return success ? Results.Ok($"Device {id} deleted.") : Results.NotFound();
+});
+
 
 
 app.Run();
