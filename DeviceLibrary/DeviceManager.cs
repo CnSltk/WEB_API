@@ -43,16 +43,4 @@ public class DeviceManager
 
         return _devices.Remove(device);
     }
-
-    public void TurnOnDevice(string id)
-    {
-        var device = GetDeviceById(id);
-        device?.TurnOn();
-    }
-
-    public void TurnOffDevice(string id)
-    {
-        var device = GetDeviceById(id);
-        device?.TurnOff();
-    }
 }

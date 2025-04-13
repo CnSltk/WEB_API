@@ -16,50 +16,36 @@ public class DeviceController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<Device>> GetAllDevices()
+    public IResult GetAllDevices()
     {
-        return Ok(_deviceManager.GetAllDevices());
+        return Results.Ok(_deviceManager.GetAllDevices());
     }
 
     [HttpGet("{id}")]
-    public ActionResult<Device> GetDeviceById(string id)
+    public IResult GetDeviceById(string id)
     {
         var device = _deviceManager.GetDeviceById(id);
-        return device == null ? NotFound() : Ok(device);
+        return device == null ? Results.NotFound() : Results.Ok(device);
     }
 
     [HttpPost]
-    public IActionResult AddDevice([FromBody] Device device)
+    public IResult AddDevice([FromBody] Device device)
     {
         _deviceManager.AddDevice(device);
-        return CreatedAtAction(nameof(GetDeviceById), new { id = device.Id }, device);
+        return Results.Created($"/api/device/{device.Id}", device);
     }
 
     [HttpPut("{id}")]
-    public IActionResult UpdateDevice(string id, [FromBody] string newName)
+    public IResult UpdateDevice(string id, [FromBody] string newName)
     {
         var updated = _deviceManager.UpdateDevice(id, newName);
-        return updated ? NoContent() : NotFound();
+        return updated ? Results.NoContent() : Results.NotFound();
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteDevice(string id)
+    public IResult DeleteDevice(string id)
     {
         var deleted = _deviceManager.DeleteDevice(id);
-        return deleted ? NoContent() : NotFound();
-    }
-
-    [HttpPost("{id}/on")]
-    public IActionResult TurnOn(string id)
-    {
-        _deviceManager.TurnOnDevice(id);
-        return NoContent();
-    }
-
-    [HttpPost("{id}/off")]
-    public IActionResult TurnOff(string id)
-    {
-        _deviceManager.TurnOffDevice(id);
-        return NoContent();
+        return deleted ? Results.NoContent() : Results.NotFound();
     }
 }
